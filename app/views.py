@@ -8,6 +8,12 @@ This file creates your application.
 from app import app
 from flask import render_template, request, jsonify, send_file
 import os
+from flask_wtf.csrf import generate_csrf
+from app import app, db
+from app.forms import MovieForm
+from app.models import Movie
+from flask import render_template, request, jsonify, send_file, url_for, send_from_directory
+from werkzeug.utils import secure_filename
 
 
 ###
@@ -17,6 +23,43 @@ import os
 @app.route('/')
 def index():
     return jsonify(message="This is the beginning of our API")
+
+@app.route('/api/v1/movies', methods=['POST'])
+def movies():
+    fill_movie_form = MovieForm()
+    if fill_movie_form.validate_on_submit():
+        title = fill_movie_form.title.data
+        description = fill_movie_form.description.data
+        poster = fill_movie_form.poster.data
+        created_at = datetime.utcnow()
+        poster_filename = secure_filename(poster.filename)
+        poster.save(os.path.join(app.config['UPLOAD_FOLDER'], poster_filename))
+        new_movie = Movie(title, description, poster_filename, created_at)
+        db.session.add(new_movie)
+        db.session.commit()
+        movie_data = {
+            "message": "Movie successfully added",
+            "title": title,
+            "poster": url_for('getImage', filename=poster_filename),
+            "description": description
+        }
+        return jsonify(data=movie_data)
+    errors = form_errors(fill_movie_form)
+    return jsonify(errors=errors)
+
+@app.route('/api/v1/movies', methods=['GET'])
+def add_movies():
+    movies = db.session.execute(db.select(Movie)).scalars()
+    movie_data = []
+    for movie in movies:
+        movie_data.append({
+           "id": movie.id,
+           "title": movie.title,
+           "description": movie.description,
+           "poster": url_for('getImage', filename=movie.poster)
+        })
+    return jsonify(movies=movie_data)
+    
 
 
 ###
@@ -61,3 +104,7 @@ def add_header(response):
 def page_not_found(error):
     """Custom 404 page."""
     return render_template('404.html'), 404
+
+@app.route('/api/v1/csrf-token', methods=['GET'])
+def get_csrf():
+    return jsonify({'csrf_token': generate_csrf()})
