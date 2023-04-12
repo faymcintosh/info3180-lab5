@@ -38,15 +38,15 @@
     <div class="form-container">
     <h2>Upload Form</h2>
     <form @submit.prevent="saveMovie" enctype="multipart/form-data" id="movieForm">
-        <div class="forms mb-3">
+        <div class="form-group mb-3">
         <label for="title" class="form-label">Movie Title</label>
         <input type="text" name="title" class="form-control" />
         </div>
-        <div class="forms mb-3">
+        <div class="form-group mb-3">
         <label for="description" class="form-label">Description</label>
         <textarea name="description" class="form-control" rows="3"></textarea>
         </div>
-        <div class="forms mb-3">
+        <div class="form-group mb-3">
         <label for="poster" class="form-label">Poster</label>
         <input type="file" name="poster" class="form-control" />
         </div>
